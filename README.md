@@ -1,6 +1,6 @@
 # glow-cloud
 
-Self-deployable Bitcoin/Lightning payment API wrapping the [Breez Spark SDK](https://github.com/nickhntv/breez-sdk-spark).
+Self-deployable Lightning API wrapping the [Breez SDK - Spark](https://github.com/nickhntv/breez-sdk-spark).
 
 ## Quick Start
 
