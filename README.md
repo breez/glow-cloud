@@ -1,6 +1,6 @@
 # glow-cloud
 
-Your own Lightning node in the cloud — always-on and free. Deploy to Vercel + Supabase (both have generous free tiers) and get a personal Bitcoin/Lightning API you can hit from anywhere, without running infrastructure yourself.
+Your own Lightning wallet in the cloud: always-on and free. Deploy to Vercel + Supabase (both have generous free tiers) and get a personal Lightning API you can hit from anywhere at any time, without running infrastructure yourself.
 
 Built on the [Breez SDK - Spark](https://github.com/nickhntv/breez-sdk-spark).
 
