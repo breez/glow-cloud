@@ -17,7 +17,7 @@ The setup wizard walks you through generating a wallet mnemonic, getting a Breez
 
 ## What It Does
 
-glow-cloud gives you a personal Lightning payment API. Once deployed, you can:
+glow-cloud gives you a personal Lightning API. Once deployed, you can:
 
 - **Receive** Lightning payments via BOLT11 invoices
 - **Send** payments to invoices or Lightning addresses
