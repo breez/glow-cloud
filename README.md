@@ -45,7 +45,7 @@ Config is stored in `~/.config/glow-cloud/config.json` and auto-populated after 
 ## Stack
 
 - **Python 3.12+** / FastAPI
-- **Breez SDK** (`breez-sdk-spark`) for Lightning
+- **Breez SDK** for Lightning
 - **Supabase** PostgreSQL for SDK persistence and app tables
 - **Vercel** for deployment
 
