@@ -52,7 +52,7 @@ def save_config(data: dict) -> None:
         f.write("\n")
 
 
-def api_request(config: dict, method: str, path: str, body: dict | None = None) -> dict:
+def api_request(config: dict, method: str, path: str, body: dict | None = None, timeout: int = 30) -> dict:
     """Make an API request. Returns parsed JSON or exits on error."""
     url = config.get("url")
     if not url:
@@ -70,7 +70,7 @@ def api_request(config: dict, method: str, path: str, body: dict | None = None) 
         req.add_header("Content-Type", "application/json")
 
     try:
-        with urlopen(req, timeout=30) as resp:
+        with urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read())
     except HTTPError as e:
         err_body = e.read().decode(errors="replace")
@@ -247,7 +247,8 @@ def cmd_payments(args, config: dict) -> None:
 
 
 def cmd_sync(args, config: dict) -> None:
-    data = api_request(config, "POST", "/sync")
+    print("Syncing...", flush=True)
+    data = api_request(config, "POST", "/sync", timeout=120)
     print(f"Synced. Balance: {data['balance_sats']:,} sats")
 
 

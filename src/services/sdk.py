@@ -69,7 +69,10 @@ async def get_sdk():
 async def disconnect_sdk() -> None:
     global _sdk
     if _sdk is not None:
-        await _sdk.disconnect()
+        try:
+            await asyncio.wait_for(_sdk.disconnect(), timeout=5)
+        except (asyncio.TimeoutError, Exception):
+            pass  # disconnect may hang due to dead background tasks (#662)
         _sdk = None
 
 
