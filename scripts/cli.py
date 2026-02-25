@@ -62,7 +62,7 @@ def api_request(config: dict, method: str, path: str, body: dict | None = None) 
 
     key = config.get("key")
     full_url = f"{url.rstrip('/')}{path}"
-    data = json.dumps(body).encode() if body else None
+    data = json.dumps(body).encode() if body is not None else None
     req = Request(full_url, data=data, method=method)
     if key:
         req.add_header("X-API-Key", key)

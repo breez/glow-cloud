@@ -15,9 +15,9 @@ async def get_pool() -> asyncpg.Pool:
         if _pool is not None:
             return _pool
         _pool = await asyncpg.create_pool(
-            os.environ["DATABASE_URL"],
-            min_size=1,
-            max_size=5,
+            os.environ.get("APP_DATABASE_URL", os.environ["DATABASE_URL"]),
+            min_size=0,
+            max_size=2,
             statement_cache_size=0,
         )
         return _pool

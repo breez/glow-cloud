@@ -21,6 +21,8 @@ async def receive(
     payment_method = ReceivePaymentMethod.BOLT11_INVOICE(
         description=body.description,
         amount_sats=body.amount_sats,
+        expiry_secs=None,
+        payment_hash=None,
     )
     response = await sdk.receive_payment(
         request=ReceivePaymentRequest(payment_method=payment_method)

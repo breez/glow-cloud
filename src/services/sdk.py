@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 from breez_sdk_spark import (
@@ -7,11 +8,23 @@ from breez_sdk_spark import (
     Seed,
     default_config,
     default_postgres_storage_config,
-    create_postgres_storage,
+    init_logging,
 )
+
+logger = logging.getLogger(__name__)
 
 _sdk = None
 _lock = asyncio.Lock()
+
+
+class _SdkLogger:
+    def log(self, entry):
+        logger.info("SDK: %s", entry)
+
+
+class _SdkEventListener:
+    def on_event(self, event):
+        logger.info("SDK event: %s", event)
 
 
 def _get_network() -> Network:
@@ -39,11 +52,17 @@ async def get_sdk():
         pg_config = default_postgres_storage_config(
             connection_string=os.environ["DATABASE_URL"],
         )
-        storage = await create_postgres_storage(config=pg_config)
+        pg_config.max_pool_size = 2
+
+        try:
+            init_logging(log_dir=None, app_logger=_SdkLogger(), log_filter=None)
+        except Exception:
+            pass  # may already be initialized
 
         builder = SdkBuilder(config=config, seed=seed)
-        await builder.with_storage(storage=storage)
+        await builder.with_postgres_storage(config=pg_config)
         _sdk = await builder.build()
+        await _sdk.add_event_listener(listener=_SdkEventListener())
         return _sdk
 
 
