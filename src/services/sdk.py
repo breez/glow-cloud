@@ -23,7 +23,7 @@ class _SdkLogger:
 
 
 class _SdkEventListener:
-    def on_event(self, event):
+    async def on_event(self, event):
         logger.info("SDK event: %s", event)
 
 
