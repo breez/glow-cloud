@@ -224,6 +224,28 @@ def cmd_keys(args, config: dict) -> None:
         print("Key revoked.")
 
 
+def cmd_payments(args, config: dict) -> None:
+    data = api_request(config, "GET", "/payments")
+    payments = data.get("payments", [])
+    if not payments:
+        print("No payments.")
+        return
+    for p in payments:
+        # Parse the string representation
+        # Format: Payment(id=..., payment_type=PaymentType.RECEIVE, status=..., amount=100, ...)
+        import re
+        amount = re.search(r"amount=(\d+)", p)
+        fees = re.search(r"fees=(\d+)", p)
+        ptype = "IN" if "PaymentType.RECEIVE" in p else "OUT"
+        status = re.search(r"status=PaymentStatus\.(\w+)", p)
+        desc = re.search(r"description=([^,)]+)", p)
+        amount_str = f"{int(amount.group(1)):,}" if amount else "?"
+        fees_str = f" (fee: {int(fees.group(1)):,})" if fees and int(fees.group(1)) > 0 else ""
+        status_str = status.group(1).lower() if status else "?"
+        desc_str = f"  {desc.group(1)}" if desc else ""
+        print(f"  {ptype}  {amount_str:>10} sats  {status_str}{fees_str}{desc_str}")
+
+
 def cmd_sync(args, config: dict) -> None:
     data = api_request(config, "POST", "/sync")
     print(f"Synced. Balance: {data['balance_sats']:,} sats")
@@ -256,6 +278,9 @@ def main():
 
     # health
     sub.add_parser("health", help="Check API health")
+
+    # payments
+    sub.add_parser("payments", help="List recent payments")
 
     # balance
     sub.add_parser("balance", help="Show wallet balance")
@@ -308,6 +333,7 @@ def main():
         "balance": cmd_balance,
         "receive": cmd_receive,
         "keys": cmd_keys,
+        "payments": cmd_payments,
         "sync": cmd_sync,
         "send": cmd_send,
     }
