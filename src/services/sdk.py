@@ -9,8 +9,8 @@ from breez_sdk_spark import (
     default_config,
     default_postgres_storage_config,
     init_logging,
-    uniffi_set_event_loop,
 )
+from breez_sdk_spark.breez_sdk_spark import uniffi_set_event_loop
 
 logger = logging.getLogger(__name__)
 
