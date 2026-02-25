@@ -76,11 +76,5 @@ async def disconnect_sdk() -> None:
         _sdk = None
 
 
-async def reconnect_sdk() -> None:
-    """Disconnect and reinitialize the SDK to force a fresh sync."""
-    await disconnect_sdk()
-    await get_sdk()
-
-
 def is_sdk_initialized() -> bool:
     return _sdk is not None

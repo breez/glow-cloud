@@ -11,6 +11,7 @@ Commands:
   balance                    Show wallet balance
   receive                    Create a Lightning invoice
   send <destination>         Send a Lightning payment
+  payments                   List recent payments
   keys create <name>         Create a new API key (admin)
   keys list                  List all API keys (admin)
   keys revoke <key_id>       Revoke an API key (admin)
@@ -246,12 +247,6 @@ def cmd_payments(args, config: dict) -> None:
         print(f"  {ptype}  {amount_str:>10} sats  {status_str}{fees_str}{desc_str}")
 
 
-def cmd_sync(args, config: dict) -> None:
-    print("Syncing...", flush=True)
-    data = api_request(config, "POST", "/sync", timeout=120)
-    print(f"Synced. Balance: {data['balance_sats']:,} sats")
-
-
 def cmd_send(args, config: dict) -> None:
     body = {"destination": args.destination}
     if args.amount is not None:
@@ -307,9 +302,6 @@ def main():
     keys_revoke = keys_sub.add_parser("revoke", help="Revoke an API key")
     keys_revoke.add_argument("key_id", help="ID of the key to revoke")
 
-    # sync
-    sub.add_parser("sync", help="Force SDK reconnect and sync (admin)")
-
     # send
     s = sub.add_parser("send", help="Send a Lightning payment")
     s.add_argument("destination", help="BOLT11 invoice or Lightning address")
@@ -335,7 +327,6 @@ def main():
         "receive": cmd_receive,
         "keys": cmd_keys,
         "payments": cmd_payments,
-        "sync": cmd_sync,
         "send": cmd_send,
     }
     commands[args.command](args, config)
