@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from breez_sdk_spark import GetInfoRequest, ListPaymentsRequest
 
 from src.middleware.auth import require_permission
-from src.services.sdk import get_sdk
+from src.services.sdk import get_sdk, reconnect_sdk
 from src.types import ApiKeyRecord
 
 router = APIRouter()
@@ -31,3 +31,16 @@ async def payments(
     sdk = await get_sdk()
     result = await sdk.list_payments(request=ListPaymentsRequest(limit=10))
     return {"payments": [str(p) for p in result.payments]}
+
+
+@router.post("/sync")
+async def sync(
+    _api_key: Annotated[ApiKeyRecord, Depends(require_permission("admin"))],
+):
+    await reconnect_sdk()
+    sdk = await get_sdk()
+    info = await sdk.get_info(request=GetInfoRequest(ensure_synced=False))
+    return {
+        "status": "synced",
+        "balance_sats": info.balance_sats,
+    }

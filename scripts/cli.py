@@ -224,6 +224,11 @@ def cmd_keys(args, config: dict) -> None:
         print("Key revoked.")
 
 
+def cmd_sync(args, config: dict) -> None:
+    data = api_request(config, "POST", "/sync")
+    print(f"Synced. Balance: {data['balance_sats']:,} sats")
+
+
 def cmd_send(args, config: dict) -> None:
     body = {"destination": args.destination}
     if args.amount is not None:
@@ -276,6 +281,9 @@ def main():
     keys_revoke = keys_sub.add_parser("revoke", help="Revoke an API key")
     keys_revoke.add_argument("key_id", help="ID of the key to revoke")
 
+    # sync
+    sub.add_parser("sync", help="Force SDK reconnect and sync (admin)")
+
     # send
     s = sub.add_parser("send", help="Send a Lightning payment")
     s.add_argument("destination", help="BOLT11 invoice or Lightning address")
@@ -300,6 +308,7 @@ def main():
         "balance": cmd_balance,
         "receive": cmd_receive,
         "keys": cmd_keys,
+        "sync": cmd_sync,
         "send": cmd_send,
     }
     commands[args.command](args, config)
