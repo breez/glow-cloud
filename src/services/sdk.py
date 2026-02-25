@@ -10,7 +10,6 @@ from breez_sdk_spark import (
     default_postgres_storage_config,
     init_logging,
 )
-from breez_sdk_spark.breez_sdk_spark import uniffi_set_event_loop
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +53,6 @@ async def get_sdk():
             connection_string=os.environ["DATABASE_URL"],
         )
         pg_config.max_pool_size = 2
-
-        loop = asyncio.get_running_loop()
-        uniffi_set_event_loop(loop)
 
         try:
             init_logging(log_dir=None, app_logger=_SdkLogger(), log_filter=None)
