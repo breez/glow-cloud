@@ -128,6 +128,34 @@ def cmd_balance(args, config: dict) -> None:
         print(f"  pending outgoing: {pending_out:,} sats")
 
 
+def print_qr(text: str) -> None:
+    """Print a QR code to the terminal using Unicode block characters."""
+    try:
+        import qrcode
+        qr = qrcode.QRCode(border=2, error_correction=qrcode.constants.ERROR_CORRECT_L)
+        qr.add_data(text)
+        qr.make(fit=True)
+        matrix = qr.get_matrix()
+        # Use Unicode half-blocks: two rows per line
+        rows = len(matrix)
+        for r in range(0, rows, 2):
+            line = ""
+            for c in range(len(matrix[0])):
+                top = matrix[r][c]
+                bottom = matrix[r + 1][c] if r + 1 < rows else False
+                if top and bottom:
+                    line += "\u2588"      # full block (both dark)
+                elif top:
+                    line += "\u2580"      # upper half block
+                elif bottom:
+                    line += "\u2584"      # lower half block
+                else:
+                    line += " "           # both light
+            print(line)
+    except ImportError:
+        pass  # qrcode not installed, skip
+
+
 def cmd_receive(args, config: dict) -> None:
     body = {}
     if args.amount is not None:
@@ -135,7 +163,9 @@ def cmd_receive(args, config: dict) -> None:
     if args.description is not None:
         body["description"] = args.description
     data = api_request(config, "POST", "/receive", body)
-    print(data["payment_request"])
+    invoice = data["payment_request"]
+    print_qr(invoice.upper())
+    print(invoice)
     fee = data.get("fee_sats")
     if fee:
         print(f"  fee: {fee:,} sats")
