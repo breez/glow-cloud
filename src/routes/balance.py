@@ -16,7 +16,7 @@ async def balance(
     _api_key: Annotated[ApiKeyRecord, Depends(require_permission("balance"))],
 ):
     sdk = await get_sdk()
-    info = await sdk.get_info(request=GetInfoRequest(ensure_synced=False))
+    info = await sdk.get_info(request=GetInfoRequest(ensure_synced=True))
 
     return {
         "balance_sats": info.balance_sats,
