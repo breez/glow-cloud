@@ -7,7 +7,7 @@ Self-deployable Bitcoin/Lightning payment API wrapping the Breez Spark SDK.
 - Python 3.12+ / FastAPI
 - Breez Spark SDK (`breez-sdk-spark`) with PostgreSQL persistence
 - asyncpg for app tables (API keys, budget)
-- Deployed to Vercel + Supabase
+- Deployed to Vercel + Neon or Supabase
 
 ## Project Structure
 

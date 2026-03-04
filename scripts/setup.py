@@ -6,7 +6,7 @@ Run: glow setup
 Installs dependencies automatically, then walks through:
   1. Mnemonic — generate new or use existing
   2. Breez API key — request or enter existing
-  3. Supabase database — provision or enter existing URL
+  3. Database — provision Neon/Supabase or enter existing URL
   4. Network selection
   5. Run SQL migrations
   6. Create first API key
@@ -81,6 +81,7 @@ import asyncpg  # noqa: E402
 
 BREEZ_API_KEY_URL = "https://breez.technology/contact/apikey"
 SUPABASE_API = "https://api.supabase.com/v1"
+NEON_API = "https://console.neon.tech/api/v2"
 ENV_PATH = os.path.join(PROJECT_DIR, ".env")
 SQL_PATH = os.path.join(PROJECT_DIR, "sql", "001_init.sql")
 
@@ -199,6 +200,87 @@ def provision_supabase(token: str) -> str | None:
         print("failed, using fallback.")
 
     print(f"  Database URL constructed (pooler).")
+    return database_url
+
+
+def _neon_request(
+    method: str, path: str, token: str, body: dict | None = None
+) -> dict | list | None:
+    """Make a request to the Neon API."""
+    from urllib.error import HTTPError
+
+    url = f"{NEON_API}{path}"
+    data = json.dumps(body).encode() if body else None
+    req = Request(url, data=data, method=method)
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "glow-cloud/0.1")
+    try:
+        with urlopen(req, timeout=30) as resp:
+            raw = resp.read()
+            return json.loads(raw) if raw else None
+    except HTTPError as e:
+        body_text = e.read().decode(errors="replace")
+        print(f"failed. (HTTP {e.code})")
+        if e.code == 401:
+            print("  Token was rejected. Check that:")
+            print("    - You copied the full API key")
+            print("    - No extra spaces or quotes were included")
+            print("    - The key hasn't been revoked")
+        else:
+            print(f"  Response: {body_text[:200]}")
+        return None
+
+
+def provision_neon(token: str) -> str | None:
+    """Create a Neon project and return the DATABASE_URL."""
+    # Pick region
+    print()
+    print("  Region groups: 1) Americas  2) Europe  3) Asia-Pacific")
+    region_choice = input("  Select region [1]: ").strip() or "1"
+    region_id = {
+        "1": "aws-us-east-2",
+        "2": "aws-eu-central-1",
+        "3": "aws-ap-southeast-1",
+    }.get(region_choice, "aws-us-east-2")
+
+    # Create project
+    print()
+    print("  Creating Neon project...", end=" ", flush=True)
+    project = _neon_request("POST", "/projects", token, {
+        "project": {
+            "name": "glow-cloud",
+            "region_id": region_id,
+        }
+    })
+    if not project or "project" not in project:
+        print("failed.")
+        print(f"  Response: {project}")
+        return None
+    project_id = project["project"]["id"]
+    print(f"done. (id: {project_id})")
+
+    # Get connection URI
+    print("  Fetching connection string...", end=" ", flush=True)
+    uri_resp = _neon_request(
+        "GET",
+        f"/projects/{project_id}/connection_uri?database_name=neondb&role_name=neondb_owner",
+        token,
+    )
+    if not uri_resp or "uri" not in uri_resp:
+        print("failed.")
+        print("  Find it in: Neon Console → Project → Connection Details")
+        return None
+    print("done.")
+
+    database_url = uri_resp["uri"]
+    # Strip channel_binding param — Breez SDK's Rust postgres driver doesn't support it
+    from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+    parsed = urlparse(database_url)
+    params = parse_qs(parsed.query)
+    params.pop("channel_binding", None)
+    database_url = urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
+    print("  Database URL retrieved.")
     return database_url
 
 
@@ -415,8 +497,8 @@ async def main():
     save_env(env)
     print()
 
-    # Step 3: Database (Supabase)
-    print("  3. Supabase database")
+    # Step 3: Database
+    print("  3. Database")
     print()
     existing_db = env.get("DATABASE_URL", "")
 
@@ -429,23 +511,46 @@ async def main():
             database_url = prompt("Database URL")
         else:
             print()
-            print("  We can create a Supabase project for you automatically.")
-            print("  You need a Supabase access token:")
-            print("    1. Sign up / log in at https://supabase.com")
-            print("    2. Go to https://supabase.com/dashboard/account/tokens")
-            print("    3. Create a token and paste it here")
+            print("  Database provider:")
+            print("    1. Neon (recommended — no inactivity pausing)")
+            print("    2. Supabase")
+            provider = input("  Select provider [1]: ").strip() or "1"
             print()
-            supabase_token = prompt("Supabase access token")
-            if not supabase_token.startswith("sbp_"):
-                print("  Warning: Supabase tokens usually start with 'sbp_'.")
-            print()
-            database_url = provision_supabase(supabase_token)
-            del supabase_token
-            if not database_url:
-                print("  Automatic setup failed. Enter the URL manually.")
-                print("  Find it in: Supabase Dashboard → Settings → Database → Connection string")
+
+            if provider == "2":
+                print("  We can create a Supabase project for you automatically.")
+                print("  You need a Supabase access token:")
+                print("    1. Sign up / log in at https://supabase.com")
+                print("    2. Go to https://supabase.com/dashboard/account/tokens")
+                print("    3. Create a token and paste it here")
                 print()
-                database_url = prompt("Database URL")
+                supabase_token = prompt("Supabase access token")
+                if not supabase_token.startswith("sbp_"):
+                    print("  Warning: Supabase tokens usually start with 'sbp_'.")
+                print()
+                database_url = provision_supabase(supabase_token)
+                del supabase_token
+                if not database_url:
+                    print("  Automatic setup failed. Enter the URL manually.")
+                    print("  Find it in: Supabase Dashboard → Settings → Database → Connection string")
+                    print()
+                    database_url = prompt("Database URL")
+            else:
+                print("  We can create a Neon project for you automatically.")
+                print("  You need a Neon API key:")
+                print("    1. Sign up / log in at https://console.neon.tech")
+                print("    2. Go to Account settings → API keys")
+                print("    3. Create a key and paste it here")
+                print()
+                neon_token = prompt("Neon API key")
+                print()
+                database_url = provision_neon(neon_token)
+                del neon_token
+                if not database_url:
+                    print("  Automatic setup failed. Enter the URL manually.")
+                    print("  Find it in: Neon Console → Project → Connection Details")
+                    print()
+                    database_url = prompt("Database URL")
 
     env["DATABASE_URL"] = database_url
     save_env(env)
@@ -551,6 +656,12 @@ async def main():
 
         # Push env vars to Vercel (remove first to handle re-runs)
         print("  Setting environment variables...", end=" ", flush=True)
+        # Clean up APP_DATABASE_URL if present (db.py reads it first,
+        # so a stale value would shadow the new DATABASE_URL)
+        subprocess.run(
+            ["vercel", "env", "rm", "APP_DATABASE_URL", "production", "-y"],
+            capture_output=True, text=True, cwd=PROJECT_DIR,
+        )
         for var in ["MNEMONIC", "BREEZ_API_KEY", "DATABASE_URL", "NETWORK"]:
             val = env.get(var, "")
             if val and not val.startswith("PENDING"):
@@ -574,7 +685,18 @@ async def main():
             text=True,
         )
         if result.returncode == 0:
-            url = result.stdout.strip().split("\n")[-1]
+            deploy_url = result.stdout.strip().split("\n")[-1]
+            # Get production alias (deployment URLs have Vercel auth protection)
+            url = deploy_url
+            inspect = subprocess.run(
+                ["vercel", "inspect", deploy_url],
+                capture_output=True, text=True, cwd=PROJECT_DIR,
+            )
+            for line in (inspect.stdout + inspect.stderr).split("\n"):
+                line = line.strip()
+                if line.startswith("╶ https://"):
+                    url = line.lstrip("╶ ").strip()
+                    break
             print(f"  Deployed to: {url}")
             print()
             # Save CLI config so `glow` commands work immediately

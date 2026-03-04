@@ -50,8 +50,18 @@ async def get_sdk():
         config = default_config(network=_get_network())
         config.api_key = os.environ["BREEZ_API_KEY"]
 
+        # Strip channel_binding param if present (Neon includes it by default,
+        # but the SDK's Rust postgres driver doesn't support it)
+        from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+        db_url = os.environ["DATABASE_URL"]
+        parsed = urlparse(db_url)
+        params = parse_qs(parsed.query)
+        if "channel_binding" in params:
+            params.pop("channel_binding")
+            db_url = urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
+
         pg_config = default_postgres_storage_config(
-            connection_string=os.environ["DATABASE_URL"],
+            connection_string=db_url,
         )
         pg_config.max_pool_size = 2
 

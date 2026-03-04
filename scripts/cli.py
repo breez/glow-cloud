@@ -81,6 +81,9 @@ def api_request(config: dict, method: str, path: str, body: dict | None = None, 
             detail = err_body.split("\n")[0].strip()
         if e.code == 401:
             print("Error: Invalid API key.")
+            print("  Your key may not match the current database.")
+            print("  To fix: glow setup  (re-creates key against current DB)")
+            print("  Or set a key manually: glow config set-key <key>")
         else:
             print(f"Error: HTTP {e.code} — {detail}")
         sys.exit(1)

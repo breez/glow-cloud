@@ -1,6 +1,6 @@
 # glow-cloud
 
-Your own Lightning wallet in the cloud: always-on and free. Deploy to Vercel + Supabase (both have generous free tiers) and get a personal Lightning API you can hit from anywhere at any time, without running infrastructure yourself.
+Your own Lightning wallet in the cloud: always-on and free. Deploy to Vercel + Neon or Supabase (all have generous free tiers) and get a personal Lightning API you can hit from anywhere at any time, without running infrastructure yourself.
 
 Built on the [Breez SDK - Spark](https://github.com/nickhntv/breez-sdk-spark).
 
@@ -13,7 +13,7 @@ source .venv/bin/activate
 glow setup
 ```
 
-The setup wizard walks you through generating a wallet mnemonic, getting a Breez API key, provisioning a Supabase database, and deploying to Vercel.
+The setup wizard walks you through generating a wallet mnemonic, getting a Breez API key, provisioning a database (Neon or Supabase), and deploying to Vercel.
 
 **Windows:** Open PowerShell as admin, run `wsl --install`, and restart your PC. Then open a terminal, type `wsl`, and run the commands above.
 
@@ -46,7 +46,7 @@ Config is stored in `~/.config/glow-cloud/config.json` and auto-populated after 
 
 - **Python 3.12+** / FastAPI
 - **Breez SDK** for Lightning
-- **Supabase** PostgreSQL for SDK persistence and app tables
+- **Neon** or **Supabase** PostgreSQL for SDK persistence and app tables
 - **Vercel** for deployment
 
 ## API Keys
