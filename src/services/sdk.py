@@ -23,6 +23,14 @@ class _SdkLogger:
         logger.info("SDK: %s", entry)
 
 
+# Must be called at module level (outside async context) to avoid
+# deadlocking with the SDK's Rust async runtime during build().
+try:
+    init_logging(log_dir=None, app_logger=_SdkLogger(), log_filter=None)
+except Exception:
+    pass  # may already be initialized
+
+
 class _SdkEventListener:
     async def on_event(self, event):
         logger.info("SDK event: %s", event)
@@ -67,11 +75,6 @@ async def get_sdk():
 
         loop = asyncio.get_running_loop()
         uniffi_set_event_loop(loop)
-
-        try:
-            init_logging(log_dir=None, app_logger=_SdkLogger(), log_filter=None)
-        except Exception:
-            pass  # may already be initialized
 
         builder = SdkBuilder(config=config, seed=seed)
         await builder.with_postgres_storage(config=pg_config)

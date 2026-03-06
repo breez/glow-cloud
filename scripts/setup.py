@@ -181,25 +181,29 @@ def provision_supabase(token: str) -> str | None:
 
     print(" ready.")
 
-    # Get pooler connection string from API (hostname varies per project)
+    # Get session-mode pooler connection string (port 5432).
+    # Transaction-mode pooler (port 6543) doesn't support prepared
+    # statements which the SDK's Rust postgres driver requires.
     print("  Fetching pooler config...", end=" ", flush=True)
     pooler_config = _supabase_request("GET", f"/projects/{ref}/config/database/pooler", token)
     if pooler_config and len(pooler_config) > 0:
         pc = pooler_config[0]
+        # Force port 5432 (session mode) regardless of what the API returns
+        db_port = 5432
         database_url = (
             f"postgresql://{pc['db_user']}:{urlquote(db_pass)}"
-            f"@{pc['db_host']}:{pc['db_port']}/{pc['db_name']}"
+            f"@{pc['db_host']}:{db_port}/{pc['db_name']}"
         )
         print("done.")
     else:
         # Fallback: construct from known pattern
         database_url = (
             f"postgresql://postgres.{ref}:{urlquote(db_pass)}"
-            f"@aws-0-{region}.pooler.supabase.com:6543/postgres"
+            f"@aws-0-{region}.pooler.supabase.com:5432/postgres"
         )
         print("failed, using fallback.")
 
-    print(f"  Database URL constructed (pooler).")
+    print(f"  Database URL constructed (session-mode pooler).")
     return database_url
 
 
