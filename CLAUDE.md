@@ -71,7 +71,7 @@ glow setup                                         # run setup wizard
 glow health                                        # GET /health
 glow balance                                       # GET /balance
 glow receive [--amount 1000] [--description "tip"] # POST /receive
-glow send <invoice> [--amount 1000]                # POST /send
+glow send <invoice|address> [--amount 1000]        # POST /send (BOLT11 or Lightning address)
 glow keys create <name> [--permissions ...] [--budget N --period daily] # POST /keys (admin)
 glow keys list                                     # GET /keys (admin)
 glow keys revoke <key_id>                          # DELETE /keys/{id} (admin)

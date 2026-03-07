@@ -34,7 +34,8 @@ The `glow` command is installed automatically by `uv sync`.
 glow health                                        # check API status
 glow balance                                       # show wallet balance
 glow receive --amount 1000 --description "tip"     # create an invoice
-glow send <invoice>                                # pay an invoice
+glow send <invoice>                                # pay a BOLT11 invoice
+glow send user@domain.com --amount 100             # send to a Lightning address
 glow keys create myapp --permissions balance receive --budget 10000 --period daily
 glow keys list
 glow keys revoke <key_id>
