@@ -10,7 +10,7 @@ Commands:
   health                     Check API health
   balance                    Show wallet balance
   receive                    Create a Lightning invoice
-  send <destination>         Send a Lightning payment
+  send <invoice|address>     Send to BOLT11 invoice or Lightning address
   payments                   List recent payments
   keys create <name>         Create a new API key (admin)
   keys list                  List all API keys (admin)
@@ -307,8 +307,8 @@ def main():
 
     # send
     s = sub.add_parser("send", help="Send a Lightning payment")
-    s.add_argument("destination", help="BOLT11 invoice or Lightning address")
-    s.add_argument("--amount", type=int, help="Amount in sats")
+    s.add_argument("destination", help="BOLT11 invoice or Lightning address (user@domain)")
+    s.add_argument("--amount", type=int, help="Amount in sats (required for Lightning addresses)")
 
     args = parser.parse_args()
     if not args.command:
